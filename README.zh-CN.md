@@ -1,6 +1,6 @@
 # AirDrop Plus
 
-[English](README.md)
+## [English](README.md)
 
 AirDrop Plus 是一个 Windows 托盘程序 + iOS 快捷指令方案，用于在 iPhone 与 Windows 之间传输剪贴板文本、图片和文件。
 
@@ -14,17 +14,11 @@ AirDrop Plus 是一个 Windows 托盘程序 + iOS 快捷指令方案，用于在
 
 ## 快捷指令
 
-### 中文快捷指令
 
 - 链接：https://www.icloud.com/shortcuts/e3b3e7d39ee84a49892f8de547a943f2
 
-![中文快捷指令二维码](static/QR_code.PNG)
+![快捷指令二维码](static/QR_code.PNG)
 
-### 英文快捷指令
-
-- 链接：https://www.icloud.com/shortcuts/87c14547b1de4195b903ce1d18495c2f
-
-![English Shortcut QR](static/QR_code_en.PNG)
 
 ## 引导页素材（来自 `static/`）
 
@@ -76,7 +70,6 @@ python AirDropPlus.py
 
 ## 打包说明
 
-仓库中**不包含** `dist/` 和 `installer/`。
 
 使用 PyInstaller 打包可执行文件：
 

@@ -1,6 +1,6 @@
 # AirDrop Plus
 
-[中文](README.zh-CN.md)
+## [中文](README.zh-CN.md)
 
 AirDrop Plus is a Windows tray app plus an iOS Shortcuts workflow for transferring clipboard text, images, and files between iPhone and Windows.
 
@@ -14,17 +14,9 @@ AirDrop Plus is a Windows tray app plus an iOS Shortcuts workflow for transferri
 
 ## iOS Shortcuts
 
-### Chinese Shortcut
-
-- Link: https://www.icloud.com/shortcuts/e3b3e7d39ee84a49892f8de547a943f2
-
-![Chinese Shortcut QR](static/QR_code.PNG)
-
-### English Shortcut
-
 - Link: https://www.icloud.com/shortcuts/87c14547b1de4195b903ce1d18495c2f
 
-![English Shortcut QR](static/QR_code_en.PNG)
+![Shortcut QR](static/QR_code_en.PNG)
 
 ## Guide Assets (from `static/`)
 
@@ -76,7 +68,6 @@ Endpoints:
 
 ## Build
 
-This repository intentionally does **not** include `dist/` or `installer/` outputs.
 
 Build executable with PyInstaller:
 
