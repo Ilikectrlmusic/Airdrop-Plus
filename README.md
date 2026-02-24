@@ -1,28 +1,37 @@
 # AirDrop Plus
 
-## [中文](README.zh-CN.md)
+## [<u>中文</u>](README.zh-CN.md)
 
-AirDrop Plus is a Windows tray app plus an iOS Shortcuts workflow for transferring clipboard text, images, and files between iPhone and Windows.
+AirDrop Plus is a Windows tray app + iOS Shortcuts workflow for transferring clipboard text, images, and files between iPhone and Windows over WiFi, bringing an AirDrop-like experience to Windows users.
 
-## Highlights
+## Features
 
-- Uses a generated 6-character `device_id` (`a-z`, `0-9`) instead of the Windows computer name.
-- Supports mDNS host format: `http://<device_id>.local:<port>` (Bonjour required on Windows).
-- Includes a first-run guide (QR install, device code setup, startup and save-path setup).
-- iOS text uploads are converted to plain text and written directly to the Windows clipboard (instead of saving `.txt` / `.rtf` files).
-- Bilingual UI (English / Chinese), including tray menu, guide, settings, and notifications.
+- iPhone and Windows PC should be on the same WiFi, or the PC can connect to the iPhone hotspot.
+- Provides both portable and installer versions.
+- Supports startup on boot.
+- Uses a generated 6-character `device_id` (lowercase letters + digits) instead of the Windows computer name.
+- Supports mDNS host format: `http://<device_id>.local:<port>` (Bonjour is required on Windows).
+- Includes a first-run guide (install shortcut by QR, fill device code, startup and save-path setup).
+- Bilingual UI (tray menu, guide, settings, and notifications).
 
-## iOS Shortcuts
+## Shortcut Installation
 
 - Link: https://www.icloud.com/shortcuts/87c14547b1de4195b903ce1d18495c2f
+- Or scan the QR code below:
 
 ![Shortcut QR](static/QR_code_en.PNG)
 
-## Guide Assets (from `static/`)
+## iPhone Usage Guide
+
+### Device Code Setup (`abcdef` is only an example; use the code shown in the guide)
 
 ![Device ID Setup](static/DeviceID_en.GIF)
-![Home Screen Setup](static/Home_screen_en.GIF)
-![Double Tap Setup](static/Double_tap_en.GIF)
+
+### Run the Shortcut More Conveniently
+
+| Add to Home Screen | Configure Double Back Tap (iPhone 8+) |
+| --- | --- |
+| ![Add to Home Screen](static/Home_screen_en.GIF) | ![Double Back Tap Setup](static/Double_tap_en.GIF) |
 
 ## Requirements
 
@@ -39,35 +48,119 @@ python AirDropPlus.py
 
 ## Configuration
 
-Edit `config/config.ini`:
+Edit `config/config.ini` (restart AirDrop Plus after changes):
 
-- `key`: shared secret with your iOS shortcut.
-- `port`: HTTP port used by the local server.
-- `save_path`: received file folder (empty means `%USERPROFILE%\Downloads`).
-- `device_id`: 6-char device code, auto-generated on first run.
-- `auto_start`: launch on Windows startup (`1` or `0`).
+- `key`: shared secret; must match the iOS shortcut.
+- `port`: local HTTP server port.
+- `save_path`: folder to save received files (empty means `%USERPROFILE%\Downloads`).
+- `device_id`: 6-character device code, generated on first run.
+- `auto_start`: launch at startup (`1` or `0`).
 - `startup_notify`: show startup notification (`1` or `0`).
-- `basic_notifier`: switch notifier implementation (`0` modern / `1` basic).
+- `basic_notifier`: notifier mode (`0` modern / `1` basic).
 - `language`: `en` or `zh` (auto-initialized on first run).
 
-## API Summary
+## API
 
-Headers required for most endpoints:
+### Request Headers
 
-- `Authorization`: must match `config.key`
-- `ShortcutVersion`: major/minor must match app version
+| Name | Type | Description |
+| --- | --- | --- |
+| `ShortcutVersion` | String | Shortcut version. Major/minor must match app version in `config.ini` (for example, app `1.5.x` expects `1.5`). |
+| `Authorization` | String | Secret key. Must exactly match `config.ini` `key`. |
 
-Endpoints:
+### Send File (iOS -> Windows)
 
-- `GET /device/info`
-- `POST /file/send/list`
-- `POST /file/send`
-- `POST /file/receive`
-- `GET /clipboard/receive`
-- `POST /clipboard/send`
+- Method: `POST`
+- URL: `/file/send`
+- Form fields:
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `file` | File | File to upload |
+| `filename` | String | File name |
+| `notify_content` | String | Notification content. For a single file, use the file name; for multiple files, the last request can contain all names separated by line breaks. |
+
+- Response: JSON
+
+### Send File List (iOS -> Windows, pre-notification)
+
+- Method: `POST`
+- URL: `/file/send/list`
+- Form fields:
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `file_list` | String | File list separated by `\n` |
+
+- Response: JSON
+
+### Receive File (Windows -> iOS)
+
+- Method: `POST`
+- URL: `/file/receive`
+- Form fields:
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `path` | String | File path on Windows to return to iOS |
+
+- Response: file stream
+
+### Send Clipboard (iOS -> Windows)
+
+- Method: `POST`
+- URL: `/clipboard/send`
+- Body supports:
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `clipboard` | String | Clipboard text (supports form, JSON, and raw text body) |
+
+- Response: JSON
+
+### Receive Clipboard (Windows -> iOS)
+
+- Method: `GET`
+- URL: `/clipboard/receive`
+- Response: JSON, where `data.type` can be:
+
+1. `text`
+```json
+{
+  "success": true,
+  "msg": "",
+  "data": {
+    "type": "text",
+    "data": "clipboard_text"
+  }
+}
+```
+
+2. `file`
+```json
+{
+  "success": true,
+  "msg": "",
+  "data": {
+    "type": "file",
+    "data": ["c:/xx/xx/aa.png", "c:/xx/xx/bb.pdf"]
+  }
+}
+```
+
+3. `img`
+```json
+{
+  "success": true,
+  "msg": "",
+  "data": {
+    "type": "img",
+    "data": "img_base64_code"
+  }
+}
+```
 
 ## Build
-
 
 Build executable with PyInstaller:
 
@@ -75,12 +168,13 @@ Build executable with PyInstaller:
 powershell -ExecutionPolicy Bypass -File .\scripts\build_exe.ps1 -CleanOutput
 ```
 
-Output folder:
-
-- `dist\AirDropPlus`
-
-If you need an MSI/bootstrapper workflow, build it locally with your own WiX/Burn setup.
-
 ## License
 
-MIT. See `LICENSE`.
+Based on a secondary development of yeytytytytyytyt's project:  
+https://gitee.com/yeytytytytyytyt/air-drop-plus
+
+MIT License. See `LICENSE`.
+
+## Star Trend
+
+[![Star History Chart](https://starchart.cc/Ilikectrlmusic/Airdrop-Plus.svg)](https://starchart.cc/Ilikectrlmusic/Airdrop-Plus)
