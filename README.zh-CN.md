@@ -1,6 +1,6 @@
 # AirDrop Plus
 
-## [<u>English</u>](README.md)
+## [English](README.md)
 
 AirDrop Plus 是一个 Windows 托盘程序 + iOS 快捷指令方案，用于在 iPhone 与 Windows 之间通过 WiFi 传输剪贴板文本、图片和文件，让 Windows 用户也能获得类似 AirDrop 的体验。
 
@@ -170,11 +170,10 @@ powershell -ExecutionPolicy Bypass -File .\scripts\build_exe.ps1 -CleanOutput
 
 ## 许可证
 
-基于 yeytytytytyytyt 的项目二次开发：  
-https://gitee.com/yeytytytytyytyt/air-drop-plus
+基于 [yeytytytytyytyt](https://gitee.com/yeytytytytyytyt/air-drop-plus) 的项目二次开发：  
 
 许可证使用 MIT，见 `LICENSE`。
 
 ## Star 趋势
 
-[![Star History Chart](https://starchart.cc/Ilikectrlmusic/Airdrop-Plus.svg)](https://starchart.cc/Ilikectrlmusic/Airdrop-Plus)
+[![Star History Chart](https://starchart.cc/Ilikectrlmusic/Airdrop-Plus.svg?variant=adaptive)](https://starchart.cc/Ilikectrlmusic/Airdrop-Plus)

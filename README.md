@@ -1,6 +1,6 @@
 # AirDrop Plus
 
-## [<u>中文</u>](README.zh-CN.md)
+## [中文](README.zh-CN.md)
 
 AirDrop Plus is a Windows tray app + iOS Shortcuts workflow for transferring clipboard text, images, and files between iPhone and Windows over WiFi, bringing an AirDrop-like experience to Windows users.
 
@@ -170,11 +170,10 @@ powershell -ExecutionPolicy Bypass -File .\scripts\build_exe.ps1 -CleanOutput
 
 ## License
 
-Based on a secondary development of yeytytytytyytyt's project:  
-https://gitee.com/yeytytytytyytyt/air-drop-plus
+Based on a secondary development of [yeytytytytyytyt](https://gitee.com/yeytytytytyytyt/air-drop-plus)'s project
 
 MIT License. See `LICENSE`.
 
 ## Star Trend
 
-[![Star History Chart](https://starchart.cc/Ilikectrlmusic/Airdrop-Plus.svg)](https://starchart.cc/Ilikectrlmusic/Airdrop-Plus)
+[![Star History Chart](https://starchart.cc/Ilikectrlmusic/Airdrop-Plus.svg?variant=adaptive)](https://starchart.cc/Ilikectrlmusic/Airdrop-Plus)
