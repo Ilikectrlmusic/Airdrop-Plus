@@ -1,4 +1,4 @@
-# AirDrop Plus
+# <img src="static/icon.ico" width="35" /> AirDrop Plus
 
 ## [中文](README.zh-CN.md)
 
@@ -9,7 +9,7 @@ AirDrop Plus is a Windows tray app + iOS Shortcuts workflow for transferring cli
 - iPhone and Windows PC should be on the same WiFi, or the PC can connect to the iPhone hotspot.
 - Provides both portable and installer versions.
 - Supports startup on boot.
-- Uses a generated 6-character `device_id` (lowercase letters + digits) instead of the Windows computer name.
+* Uses an auto-generated 6-character `device_id` (lowercase letters + digits) as the device identifier.
 - Supports mDNS host format: `http://<device_id>.local:<port>` (Bonjour is required on Windows).
 - Includes a first-run guide (install shortcut by QR, fill device code, startup and save-path setup).
 - Bilingual UI (tray menu, guide, settings, and notifications).

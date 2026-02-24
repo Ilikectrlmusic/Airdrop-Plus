@@ -1,4 +1,4 @@
-# AirDrop Plus
+# <img src="static/icon.ico" width="35" /> AirDrop Plus
 
 ## [English](README.md)
 
@@ -9,7 +9,7 @@ AirDrop Plus 是一个 Windows 托盘程序 + iOS 快捷指令方案，用于在
 - 手机和电脑需要连接同一 WiFi，或电脑连接手机热点。
 - 提供便携版和安装版。
 - 支持开机自启动。
-- 使用自动生成的 6 位 `device_id`（小写字母 + 数字）作为设备识别码，不再依赖 Windows 设备名称。
+- 使用自动生成的 6 位 `device_id`（小写字母 + 数字）作为设备识别码。
 - 支持 mDNS 地址：`http://<device_id>.local:<port>`（Windows 端需要 Bonjour）。
 - 首次运行提供引导页（扫码安装、填写设备码、开机自启动和保存路径设置）。
 - 支持中英文界面（托盘菜单、引导页、设置页、通知）。
