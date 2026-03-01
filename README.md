@@ -162,10 +162,18 @@ Edit `config/config.ini` (restart AirDrop Plus after changes):
 
 ## Build
 
-Build executable with PyInstaller:
+### Package with PyInstaller:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\build_exe.ps1 -CleanOutput
+```
+
+### Build the exe installer with Bonjour included:
+
+Install Inno Setup into installer\InnoSetup, then run:
+
+```powershell
+.\installer\InnoSetup\ISCC.exe .\installer\AirDropPlusInstaller.iss
 ```
 
 ## License

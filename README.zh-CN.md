@@ -162,10 +162,18 @@ python AirDropPlus.py
 
 ## 打包说明
 
-使用 PyInstaller 打包可执行文件：
+### 使用 PyInstaller 打包：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\build_exe.ps1 -CleanOutput
+```
+
+### 构建含 bonjour 的 exe安装包：
+
+把 inno setup 安装到 installer\InnoSetup 中，然后运行：
+
+```powershell
+.\installer\InnoSetup\ISCC.exe .\installer\AirDropPlusInstaller.iss
 ```
 
 ## 许可证

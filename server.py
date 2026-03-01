@@ -1,10 +1,11 @@
-﻿import io
-import os
+﻿import os
+import queue
 import re
+import threading
 import traceback
 
 import flask
-from flask import Blueprint, stream_with_context, request
+from flask import Blueprint, request
 from striprtf.striprtf import rtf_to_text
 from werkzeug.utils import secure_filename
 
@@ -23,10 +24,23 @@ def get_clipboard_dto(clipboard_type: ClipboardType, data: str):
 
 
 class Server:
+    READ_AHEAD_BYTES = 64 * 1024
+    STREAM_CHUNK_BYTES = 512 * 1024
+    MAX_CLIPBOARD_UPLOAD_BYTES = 2 * 1024 * 1024
+    MAX_NOTIFY_TEXT_LENGTH = 240
+
     def __init__(self, config: Config, notifier: INotifier):
         self.config = config
         self.notifier = notifier
         self.is_en = str(getattr(config, 'language', 'zh')).lower().startswith('en')
+
+        self._notify_queue: queue.Queue = queue.Queue(maxsize=200)
+        self._notify_thread = threading.Thread(
+            target=self._notify_worker,
+            name='AirDropPlus-Notifier',
+            daemon=True,
+        )
+        self._notify_thread.start()
 
         self.blueprint = Blueprint('server', __name__)
         self.register_routes()
@@ -36,13 +50,64 @@ class Server:
     def _t(self, zh: str, en: str) -> str:
         return en if self.is_en else zh
 
+    @staticmethod
+    def _short_text(value, max_length: int) -> str:
+        text = '' if value is None else str(value)
+        text = text.replace('\r\n', '\n').strip()
+        if text == '':
+            return ''
+        if len(text) <= max_length:
+            return text
+        return text[: max_length - 1] + '…'
+
+    def _notify_worker(self):
+        while True:
+            callback, args, kwargs = self._notify_queue.get()
+            try:
+                callback(*args, **kwargs)
+            except Exception:
+                traceback.print_exc()
+            finally:
+                self._notify_queue.task_done()
+
+    def _submit_notify(self, callback, *args, **kwargs):
+        try:
+            self._notify_queue.put_nowait((callback, args, kwargs))
+        except queue.Full:
+            # Skip low-priority notifications when queue is full to avoid blocking transfer requests.
+            pass
+
     def _notify(self, title_zh: str, msg_zh: str, title_en: str | None = None, msg_en: str | None = None):
         title_en = title_en if title_en is not None else title_zh
         msg_en = msg_en if msg_en is not None else msg_zh
-        self.notifier.notify(self._t(title_zh, title_en), self._t(msg_zh, msg_en))
+
+        title = self._short_text(self._t(title_zh, title_en), 80)
+        msg = self._short_text(self._t(msg_zh, msg_en), self.MAX_NOTIFY_TEXT_LENGTH)
+        self._submit_notify(self.notifier.notify, title, msg)
+
+    def _show_future_files(self, folder: str | None, filename_list: list[str], to_mobile: bool):
+        self._submit_notify(self.notifier.show_future_files, folder, filename_list, to_mobile)
+
+    def _show_received_file(self, folder: str, filename: str, ori_filename: str):
+        self._submit_notify(self.notifier.show_received_file, folder, filename, ori_filename)
+
+    def _show_received_files(self, folder: str, ori_filename_list: list[str]):
+        self._submit_notify(self.notifier.show_received_files, folder, ori_filename_list)
+
+    def _write_upload_stream(self, file_stream, file_path: str, head_bytes: bytes):
+        with open(file_path, 'wb') as f:
+            if head_bytes:
+                f.write(head_bytes)
+
+            while True:
+                chunk = file_stream.read(self.STREAM_CHUNK_BYTES)
+                if not chunk:
+                    break
+                f.write(chunk)
 
     def run(self, host: str, port: int):
-        self.app.run(host=host, port=port)
+        # Explicitly enable threading so one long request does not block all transfers.
+        self.app.run(host=host, port=port, threaded=True, use_reloader=False)
 
     @staticmethod
     def decode_text_bytes(raw: bytes):
@@ -120,7 +185,7 @@ class Server:
         text = re.sub(r'\\line ?', '\n', text)
         text = re.sub(r'\\tab ?', '\t', text)
         text = re.sub(r'\\[a-zA-Z]+-?\d* ?', '', text)
-        text = text.replace(r'\{', '{').replace(r'\}', '}').replace(r'\\', '\\')
+        text = text.replace(r'\\{', '{').replace(r'\\}', '}').replace(r'\\\\', '\\')
         text = text.replace('{', '').replace('}', '')
         text = text.replace('\r', '')
         text = re.sub(r'\n{3,}', '\n\n', text)
@@ -193,7 +258,7 @@ class Server:
         @self.blueprint.route('/file/send/list', methods=['POST'])
         def send_file_list():
             filename_list = request.form['file_list'].splitlines()
-            self.notifier.show_future_files(self.config.save_path, filename_list, to_mobile=False)
+            self._show_future_files(self.config.save_path, filename_list, to_mobile=False)
             return Result.success(msg=self._t('发送成功', 'Sent successfully'))
 
         @self.blueprint.route('/file/send', methods=['POST'])
@@ -202,47 +267,53 @@ class Server:
                 return Result.error(msg=self._t('文件不存在', 'File is missing'))
 
             file = request.files['file']
-            filename = secure_filename(file.filename)
+            filename = secure_filename(file.filename or '')
+            if filename == '':
+                filename = 'untitled.bin'
+
             notify_content = request.form.get('notify_content', '')
             content_type = getattr(file, 'content_type', '')
-            head_bytes = file.stream.read(1024 * 64)
+            head_bytes = file.stream.read(self.READ_AHEAD_BYTES)
+            buffered_bytes = head_bytes
 
             if self.should_convert_upload_to_clipboard(filename, content_type, head_bytes):
-                raw = head_bytes + file.stream.read()
-                text = self.extract_upload_text(filename, raw)
-                if text is not None:
-                    success, msg = ClipboardUtil.set_text(text)
-                    if success:
-                        self._notify('设置剪贴板文本', text, 'Clipboard text set', text)
-                        return Result.success(msg=self._t('发送成功', 'Sent successfully'))
-                    self._notify('设置剪贴板出错', msg, 'Failed to set clipboard', msg)
-                    return Result.error(msg=msg)
+                max_extra = max(0, self.MAX_CLIPBOARD_UPLOAD_BYTES - len(head_bytes))
+                probe_bytes = file.stream.read(max_extra + 1)
+                buffered_bytes = head_bytes + probe_bytes
+
+                if len(buffered_bytes) <= self.MAX_CLIPBOARD_UPLOAD_BYTES:
+                    text = self.extract_upload_text(filename, buffered_bytes)
+                    if text is not None:
+                        success, msg = ClipboardUtil.set_text(text)
+                        if success:
+                            self._notify('设置剪贴板文本', text, 'Clipboard text set', text)
+                            return Result.success(msg=self._t('发送成功', 'Sent successfully'))
+                        self._notify('设置剪贴板出错', msg, 'Failed to set clipboard', msg)
+                        return Result.error(msg=msg)
 
             new_filename = utils.avoid_duplicate_filename(self.config.save_path, filename)
             file_path = os.path.join(self.config.save_path, new_filename)
-            with open(file_path, 'wb') as f:
-                if head_bytes:
-                    f.write(head_bytes)
-                for chunk in stream_with_context(file.stream):
-                    if chunk:
-                        f.write(chunk)
+            self._write_upload_stream(file.stream, file_path, buffered_bytes)
 
             if notify_content != '':
                 ori_filename_list = notify_content.splitlines()
                 if len(ori_filename_list) == 1:
-                    self.notifier.show_received_file(self.config.save_path, new_filename, filename)
+                    self._show_received_file(self.config.save_path, new_filename, filename)
                 else:
-                    self.notifier.show_received_files(self.config.save_path, ori_filename_list)
+                    self._show_received_files(self.config.save_path, ori_filename_list)
 
             return Result.success(msg=self._t('发送成功', 'Sent successfully'))
 
         @self.blueprint.route('/file/receive', methods=['POST'])
         def receive_file():
-            path = request.form.get('path')
+            path = (request.form.get('path') or '').strip()
+            if path == '':
+                return Result.error(msg=self._t('缺少 path', 'Missing path'))
+            if not os.path.isfile(path):
+                return Result.error(msg=self._t('文件不存在', 'File not found'), code=404)
+
             file_name = os.path.basename(path)
-            with open(path, 'rb') as f:
-                file_content = f.read()
-            return flask.send_file(io.BytesIO(file_content), as_attachment=True, download_name=file_name)
+            return flask.send_file(path, as_attachment=True, download_name=file_name)
 
         @self.blueprint.route('/clipboard/receive')
         def receive_clipboard():
@@ -256,7 +327,7 @@ class Server:
             if success:
                 dto = get_clipboard_dto(ClipboardType.FILE, res)
                 file_names = [os.path.basename(path) for path in res]
-                self.notifier.show_future_files(None, file_names, to_mobile=True)
+                self._show_future_files(None, file_names, to_mobile=True)
                 return Result.success(data=dto)
 
             success, res = ClipboardUtil.get_img_base64()

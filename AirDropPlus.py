@@ -157,7 +157,11 @@ def start_server():
 
         if config.startup_notify:
             notifier.notify(_t('启动成功', 'Startup succeeded'), startup_msg)
-        threading.Thread(target=lambda: server.run(host='0.0.0.0', port=config.port)).start()
+        threading.Thread(
+            target=lambda: server.run(host='0.0.0.0', port=config.port),
+            name='AirDropPlus-HTTPServer',
+            daemon=True,
+        ).start()
     except Exception as e:
         notifier.notify(_t('启动失败', 'Startup failed'), _t(f'错误信息: {e}', f'Error: {e}'))
 

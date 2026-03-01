@@ -5,4 +5,5 @@ __pycache__/
 
 /build/
 /dist/
-/installer/
+/installer/*
+!/installer/AirDropPlusInstaller.iss
