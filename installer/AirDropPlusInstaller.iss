@@ -205,8 +205,8 @@ begin
   BrowseButton.Caption := CustomMessage('BrowseButton');
   BrowseButton.Width := ScaleX(88);
   BrowseButton.Left := InstallDirEdit.Left + InstallDirEdit.Width + ScaleX(8);
-  BrowseButton.Top := InstallDirEdit.Top;
-  BrowseButton.Height := InstallDirEdit.Height;
+  BrowseButton.Top := InstallDirEdit.Top - ScaleY(1);
+  BrowseButton.Height := InstallDirEdit.Height + ScaleY(2);
   BrowseButton.OnClick := @BrowseInstallDirClick;
 
   DesktopShortcutCheck := TNewCheckBox.Create(WizardForm);
