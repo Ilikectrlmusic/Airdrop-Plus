@@ -12,3 +12,4 @@ striprtf==0.0.29
 setuptools<81
 zeroconf==0.148.0
 customtkinter==5.2.2
+waitress==3.0.0

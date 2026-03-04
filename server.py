@@ -3,6 +3,7 @@ import queue
 import re
 import threading
 import traceback
+import logging
 
 import flask
 from flask import Blueprint, request
@@ -14,6 +15,11 @@ from config import Config
 from notifier import INotifier
 from result import Result
 import utils
+
+try:
+    from waitress import serve as waitress_serve
+except Exception:
+    waitress_serve = None
 
 
 def get_clipboard_dto(clipboard_type: ClipboardType, data: str):
@@ -106,7 +112,29 @@ class Server:
                 f.write(chunk)
 
     def run(self, host: str, port: int):
-        # Explicitly enable threading so one long request does not block all transfers.
+        """
+        Prefer Waitress for better resilience under unstable/slow connections.
+        Fallback to Flask dev server if Waitress is unavailable.
+        """
+        try:
+            if waitress_serve is not None:
+                waitress_serve(
+                self.app,
+                host=host,
+                port=port,
+                threads=16,
+                connection_limit=256,
+                channel_timeout=45,
+                cleanup_interval=15,
+                ident='AirDropPlus',
+                )
+                return
+        except Exception as e:
+            try:
+                logging.exception('Failed to start Waitress, fallback to Flask server: %s', e)
+            except Exception:
+                pass
+
         self.app.run(host=host, port=port, threaded=True, use_reloader=False)
 
     @staticmethod
