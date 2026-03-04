@@ -1,5 +1,6 @@
 ﻿import os
 import subprocess
+import threading
 from abc import ABC, abstractmethod
 from typing import Optional
 
@@ -73,7 +74,14 @@ class BasicNotifier(_LangMixin, INotifier):
 class Notifier(_LangMixin, INotifier):
     def __init__(self, language: str = "zh"):
         super().__init__(language=language)
-        self.toaster = InteractableWindowsToaster("", "Microsoft.Windows.Explorer")
+        self._toaster_local = threading.local()
+
+    def _get_toaster(self) -> InteractableWindowsToaster:
+        toaster = getattr(self._toaster_local, "toaster", None)
+        if toaster is None:
+            toaster = InteractableWindowsToaster("", "Microsoft.Windows.Explorer")
+            self._toaster_local.toaster = toaster
+        return toaster
 
     @staticmethod
     def _button_callback(args: ToastActivatedEventArgs):
@@ -88,11 +96,12 @@ class Notifier(_LangMixin, INotifier):
     def notify(self, title: str, msg: str):
         self.clear_toasts()
         toast = Toast([str(title), str(msg)])
-        self.toaster.show_toast(toast)
+        self._get_toaster().show_toast(toast)
 
     def clear_toasts(self):
-        self.toaster.clear_scheduled_toasts()
-        self.toaster.clear_toasts()
+        toaster = self._get_toaster()
+        toaster.clear_scheduled_toasts()
+        toaster.clear_toasts()
 
     def show_received_file(self, folder: str, filename: str, ori_filename: str):
         self.clear_toasts()
@@ -103,7 +112,7 @@ class Notifier(_LangMixin, INotifier):
         toast.AddAction(ToastButton(self._t("打开文件夹", "Open Folder"), arguments=f"select={file_path}"))
         toast.AddAction(ToastButton(self._t("关闭", "Close"), arguments="ignore="))
         toast.on_activated = self._button_callback
-        self.toaster.show_toast(toast)
+        self._get_toaster().show_toast(toast)
 
     def show_received_files(self, folder: str, ori_filename_list: list):
         self.clear_toasts()
@@ -116,7 +125,7 @@ class Notifier(_LangMixin, INotifier):
         toast.AddAction(ToastButton(self._t("打开文件夹", "Open Folder"), arguments=f"open={folder}"))
         toast.AddAction(ToastButton(self._t("关闭", "Close"), arguments="ignore="))
         toast.on_activated = self._button_callback
-        self.toaster.show_toast(toast)
+        self._get_toaster().show_toast(toast)
 
     def show_future_files(self, folder: Optional[str], filename_list: list, to_mobile: bool):
         self.clear_toasts()
@@ -132,7 +141,7 @@ class Notifier(_LangMixin, INotifier):
             toast.AddAction(ToastButton(self._t("打开文件夹", "Open Folder"), arguments=f"open={folder}"))
             toast.AddAction(ToastButton(self._t("关闭", "Close"), arguments="ignore="))
             toast.on_activated = self._button_callback
-        self.toaster.show_toast(toast)
+        self._get_toaster().show_toast(toast)
 
 
 def create_notifier(basic: bool = True, language: str = "zh") -> INotifier:
