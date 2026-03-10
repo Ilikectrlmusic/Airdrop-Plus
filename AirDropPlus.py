@@ -118,10 +118,12 @@ def _is_http_server_healthy(timeout_seconds: float = 2.0) -> bool:
         return False
 
 
-def _recovery_monitor(initial_ip: str):
+def _recovery_monitor(initial_signature: tuple[str, ...]):
     check_interval = 8.0
+    force_refresh_seconds = 60.0
     last_tick = time.monotonic()
-    last_ip = initial_ip
+    last_mdns_refresh = last_tick
+    last_signature = initial_signature if initial_signature else utils.get_network_signature()
     failed_health_checks = 0
 
     while not stop_event.wait(check_interval):
@@ -129,16 +131,22 @@ def _recovery_monitor(initial_ip: str):
         woke_from_sleep = (now - last_tick) > (check_interval * 3)
         last_tick = now
 
-        current_ip = utils.get_local_ipv4()
-        ip_changed = current_ip != last_ip
-        if woke_from_sleep or ip_changed:
+        current_signature = utils.get_network_signature()
+        if not current_signature:
+            current_signature = (utils.get_local_ipv4(),)
+        current_ip = current_signature[0]
+
+        network_changed = current_signature != last_signature
+        periodic_refresh_due = (now - last_mdns_refresh) >= force_refresh_seconds
+        if woke_from_sleep or network_changed or periodic_refresh_due:
             _, mdns_error = _refresh_mdns(current_ip)
             if mdns_error is not None:
                 notifier.notify(
                     _t('网络恢复失败', 'Resume recovery failed'),
                     _t(f'mDNS 刷新失败: {mdns_error}', f'Failed to refresh mDNS: {mdns_error}'),
                 )
-            last_ip = current_ip
+            last_signature = current_signature
+            last_mdns_refresh = now
 
         if _is_http_server_healthy():
             failed_health_checks = 0
@@ -151,13 +159,13 @@ def _recovery_monitor(initial_ip: str):
             failed_health_checks = 0
 
 
-def _start_recovery_monitor(initial_ip: str):
+def _start_recovery_monitor(initial_signature: tuple[str, ...]):
     global recovery_thread
     if recovery_thread is not None and recovery_thread.is_alive():
         return
 
     recovery_thread = threading.Thread(
-        target=lambda: _recovery_monitor(initial_ip),
+        target=lambda: _recovery_monitor(initial_signature),
         name='AirDropPlus-RecoveryMonitor',
         daemon=True,
     )
@@ -246,8 +254,12 @@ def start_server():
     try:
         stop_event.clear()
         _start_http_server_thread()
-        local_ip, mdns_error = _refresh_mdns()
-        _start_recovery_monitor(local_ip)
+        network_signature = utils.get_network_signature()
+        preferred_ip = network_signature[0] if len(network_signature) > 0 else None
+        local_ip, mdns_error = _refresh_mdns(preferred_ip)
+        if not network_signature:
+            network_signature = (local_ip,)
+        _start_recovery_monitor(network_signature)
 
         startup_msg = (
             _t(f'主机: {config.device_id}', f'Host: {config.device_id}')

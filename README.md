@@ -1,5 +1,7 @@
 # <img src="static/icon.ico" width="35" /> AirDrop Plus
 
+<video src="static/demo.mp4" controls muted width="900"></video>
+
 ## [中文](README.zh-CN.md)
 
 AirDrop Plus is a Windows tray app + iOS Shortcuts workflow for transferring clipboard text, images, and files between iPhone and Windows over WiFi, bringing an AirDrop-like experience to Windows users.

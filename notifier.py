@@ -84,14 +84,50 @@ class Notifier(_LangMixin, INotifier):
         return toaster
 
     @staticmethod
+    def _normalize_path(path: str) -> str:
+        raw = str(path or "").strip()
+        if raw == "":
+            return ""
+        return os.path.normpath(os.path.abspath(os.path.expandvars(os.path.expanduser(raw))))
+
+    @classmethod
+    def _open_folder_path(cls, path: str) -> None:
+        folder_path = cls._normalize_path(path)
+        if folder_path == "":
+            return
+
+        target_path = folder_path
+        if not os.path.isdir(target_path) and os.path.isfile(target_path):
+            target_path = os.path.dirname(target_path)
+
+        if target_path == "":
+            return
+
+        os.startfile(target_path)
+
+    @classmethod
+    def _select_path(cls, path: str) -> None:
+        target_path = cls._normalize_path(path)
+        if target_path == "":
+            return
+
+        if os.path.exists(target_path):
+            subprocess.Popen(["explorer", "/select,", target_path])
+            return
+
+        parent_dir = os.path.dirname(target_path)
+        if parent_dir and os.path.isdir(parent_dir):
+            os.startfile(parent_dir)
+
+    @staticmethod
     def _button_callback(args: ToastActivatedEventArgs):
         if "=" not in args.arguments:
             return
         action, arg = args.arguments.split("=", 1)
         if action == "select":
-            subprocess.Popen(f"explorer /select,{arg}")
+            Notifier._select_path(arg)
         elif action == "open":
-            subprocess.Popen(f"explorer {arg}")
+            Notifier._open_folder_path(arg)
 
     def notify(self, title: str, msg: str):
         self.clear_toasts()

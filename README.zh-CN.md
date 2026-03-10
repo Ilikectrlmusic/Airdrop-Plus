@@ -1,5 +1,7 @@
 # <img src="static/icon.ico" width="35" /> AirDrop Plus
 
+<video src="static/demo.mp4" controls muted width="900"></video>
+
 ## [English](README.md)
 
 AirDrop Plus 是一个 Windows 托盘程序 + iOS 快捷指令方案，用于在 iPhone 与 Windows 之间通过 WiFi 传输剪贴板文本、图片和文件，让 Windows 用户也能获得类似 AirDrop 的体验。
