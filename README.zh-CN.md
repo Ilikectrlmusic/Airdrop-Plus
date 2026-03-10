@@ -1,6 +1,6 @@
 # <img src="static/icon.ico" width="35" /> AirDrop Plus
 
-<video src="static/demo.mp4" controls muted width="900"></video>
+https://github.com/user-attachments/assets/70493c71-ceeb-43bb-9b77-e3c501007086
 
 ## [English](README.md)
 
