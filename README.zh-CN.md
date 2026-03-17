@@ -172,7 +172,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\build_exe.ps1 -CleanOutput
 
 ### 构建含 bonjour 的 exe安装包：
 
-把 inno setup 安装到 installer\InnoSetup 中，然后运行：
+把 inno setup 安装到 installer\InnoSetup 中，再把 Bonjour64.msi 放到 installer\ 中，最后运行：
 
 ```powershell
 .\installer\InnoSetup\ISCC.exe .\installer\AirDropPlusInstaller.iss

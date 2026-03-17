@@ -173,9 +173,6 @@ class Server:
             return True
 
         sample = raw[:4096]
-        if b'\x00' in sample:
-            return False
-
         text = Server.decode_text_bytes(sample)
         if text is None:
             return False

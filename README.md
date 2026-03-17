@@ -172,7 +172,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\build_exe.ps1 -CleanOutput
 
 ### Build the exe installer with Bonjour included:
 
-Install Inno Setup into installer\InnoSetup, then run:
+Install Inno Setup into installer\InnoSetup, then place Bonjour64.msi into installer\, and finally run:
 
 ```powershell
 .\installer\InnoSetup\ISCC.exe .\installer\AirDropPlusInstaller.iss
