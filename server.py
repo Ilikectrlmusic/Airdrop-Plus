@@ -8,7 +8,6 @@ import logging
 import flask
 from flask import Blueprint, request
 from striprtf.striprtf import rtf_to_text
-from werkzeug.utils import secure_filename
 
 from clipboard import ClipboardType, ClipboardUtil
 from config import Config
@@ -243,6 +242,27 @@ class Server:
             return True
         return False
 
+    @staticmethod
+    def sanitize_upload_filename(filename: str) -> str:
+        candidate = str(filename or '').replace('\x00', '')
+        candidate = candidate.replace('\\', '/').split('/')[-1]
+        candidate = candidate.strip()
+        candidate = re.sub(r'[<>:\"/\\|?*\x00-\x1f]', '_', candidate)
+        candidate = candidate.rstrip(' .')
+
+        if candidate in ('', '.', '..'):
+            return ''
+
+        stem, _ = os.path.splitext(candidate)
+        reserved_names = {
+            'CON', 'PRN', 'AUX', 'NUL',
+            'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9',
+            'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9',
+        }
+        if stem.upper() in reserved_names:
+            candidate = f'_{candidate}'
+
+        return candidate
     def register_routes(self):
         @self.blueprint.before_request
         def check_api_key():
@@ -292,7 +312,7 @@ class Server:
                 return Result.error(msg=self._t('文件不存在', 'File is missing'))
 
             file = request.files['file']
-            filename = secure_filename(file.filename or '')
+            filename = self.sanitize_upload_filename(file.filename or '')
             if filename == '':
                 filename = 'untitled.bin'
 
