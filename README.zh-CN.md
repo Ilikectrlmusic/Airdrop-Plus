@@ -1,4 +1,12 @@
-# <img src="static/icon.ico" width="35" /> AirDrop Plus
+<p align="center">
+  <img src="static/icon.png" width="128" height="128" alt="AirDrop Plus icon" />
+</p>
+
+<h1 align="center">AirDrop Plus</h1>
+
+<p align="center">
+  <a href="README.md">English</a> · <a href="README.zh-CN.md">中文</a>
+</p>
 
 https://github.com/user-attachments/assets/70493c71-ceeb-43bb-9b77-e3c501007086
 
