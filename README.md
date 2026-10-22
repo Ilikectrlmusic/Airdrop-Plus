@@ -10,8 +10,6 @@
 
 https://github.com/user-attachments/assets/70493c71-ceeb-43bb-9b77-e3c501007086
 
-## [中文](README.zh-CN.md)
-
 AirDrop Plus is a Windows tray app + iOS Shortcuts workflow for transferring clipboard text, images, and files between iPhone and Windows over WiFi, bringing an AirDrop-like experience to Windows users.
 
 ## Features
@@ -66,6 +64,7 @@ Edit `config/config.ini` (restart AirDrop Plus after changes):
 - `device_id`: 6-character device code, generated on first run.
 - `auto_start`: launch at startup (`1` or `0`).
 - `startup_notify`: show startup notification (`1` or `0`).
+- `show_icon`: show the tray icon (`1`, default) or run without it (`0`). Config-file only; restart to apply. No GUI control is provided. In portable builds, edit `_internal/config/config.ini`; when hidden, stop the app via Task Manager before restarting.
 - `basic_notifier`: notifier mode (`0` modern / `1` basic).
 - `language`: `en` or `zh` (auto-initialized on first run).
 
@@ -75,7 +74,7 @@ Edit `config/config.ini` (restart AirDrop Plus after changes):
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `ShortcutVersion` | String | Shortcut version. Major/minor must match app version in `config.ini` (for example, app `1.5.x` expects `1.5`). |
+| `ShortcutVersion` | String | Minimum Windows app version required by the shortcut. App 1.7 accepts a value of 1.5, 1.6 or 1.7; a higher requirement is rejected. Versions are compared numerically, not as strings. Existing shortcuts and QR codes do not need to change for compatible app updates. |
 | `Authorization` | String | Secret key. Must exactly match `config.ini` `key`. |
 
 ### Send File (iOS -> Windows)

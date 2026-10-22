@@ -277,8 +277,17 @@ def start_server():
         notifier.notify(_t('启动失败', 'Startup failed'), _t(f'错误信息: {e}', f'Error: {e}'))
 
 
+def run_main_loop():
+    if config.show_icon:
+        create_icon()
+    else:
+        # Keep daemon HTTP/mDNS workers alive without creating a tray icon.
+        while not stop_event.wait(1.0):
+            pass
+
+
 if __name__ == '__main__':
     utils.wait_for_parent_restart_exit()
     run_first_run_guide_if_needed()
     start_server()
-    create_icon()
+    run_main_loop()

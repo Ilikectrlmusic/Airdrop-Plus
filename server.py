@@ -263,6 +263,21 @@ class Server:
             candidate = f'_{candidate}'
 
         return candidate
+    @staticmethod
+    def parse_version(value: str) -> tuple[int, ...] | None:
+        value = str(value or '').strip()
+        if len(value) > 64 or re.fullmatch(r'[0-9]+(?:\.[0-9]+){0,3}', value) is None:
+            return None
+        parts = [int(part) for part in value.split('.')]
+        while len(parts) > 1 and parts[-1] == 0:
+            parts.pop()
+        return tuple(parts)
+
+    def supports_shortcut(self, minimum_windows_version: str) -> bool:
+        current = self.parse_version(self.config.version)
+        minimum = self.parse_version(minimum_windows_version)
+        return current is not None and minimum is not None and current >= minimum
+
     def register_routes(self):
         @self.blueprint.before_request
         def check_api_key():
@@ -278,10 +293,9 @@ class Server:
             if version is None or version.strip() == '':
                 return Result.error(msg=self._t('缺少 ShortcutVersion', 'Missing ShortcutVersion'), code=400)
 
-            client_version = '.'.join(self.config.version.split('.')[:2])
-            if '.'.join(version.split('.')[:2]) != client_version:
-                zh_msg = f'版本不匹配\nWindows 版本: {self.config.version}\n快捷指令版本: {version}'
-                en_msg = f'Version mismatch\nWindows version: {self.config.version}\nShortcut version: {version}'
+            if not self.supports_shortcut(version):
+                zh_msg = f'版本不匹配\nWindows 版本: {self.config.version}\n快捷指令要求的 Windows 最低版本: {version}'
+                en_msg = f'Version mismatch\nWindows version: {self.config.version}\nMinimum Windows version required by shortcut: {version}'
                 self._notify('错误', zh_msg, 'Error', en_msg)
                 return Result.error(msg=self._t(zh_msg, en_msg), code=400)
 

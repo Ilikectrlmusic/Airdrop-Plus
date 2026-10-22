@@ -1,8 +1,11 @@
 #define MyAppName "AirDrop Plus"
-#define MyAppVersion "1.5"
+#define MyAppVersion "1.7"
 #define MyAppPublisher "Ilikectrlmusic"
 #define MyAppURL "https://github.com/Ilikectrlmusic/Airdrop-Plus"
 #define MyAppExeName "AirDropPlus.exe"
+#ifndef MyAppSourceDir
+  #define MyAppSourceDir "..\dist\AirDropPlus"
+#endif
 
 [Setup]
 AppId={{9D2C8B7E-6F5B-4F80-B5ED-790A4D56FBA9}
@@ -61,7 +64,7 @@ chinesesimplified.BonjourInstallFailed=Bonjour 安装失败（退出码：%1）�
 chinesesimplified.LaunchProgram=运行 %1
 
 [Files]
-Source: "..\dist\AirDropPlus\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
+Source: "{#MyAppSourceDir}\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
 Source: "Bonjour64.msi"; Flags: dontcopy
 
 [Icons]

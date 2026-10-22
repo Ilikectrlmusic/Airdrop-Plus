@@ -30,6 +30,7 @@ class Config:
         self.port = int(self.config.get('config', 'port'))
         self.basic_notifier = False if self.config.get('config', 'basic_notifier')=='0' else True
         self.startup_notify = self.config.get('config', 'startup_notify', fallback='1').strip() != '0'
+        self.show_icon = self.config.get('config', 'show_icon', fallback='1').strip() != '0'
 
         self.version = self.config.get('info', 'version')
         self.device_id = self._load_or_create_device_id()

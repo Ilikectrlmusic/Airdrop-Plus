@@ -10,8 +10,6 @@
 
 https://github.com/user-attachments/assets/70493c71-ceeb-43bb-9b77-e3c501007086
 
-## [English](README.md)
-
 AirDrop Plus 是一个 Windows 托盘程序 + iOS 快捷指令方案，用于在 iPhone 与 Windows 之间通过 WiFi 传输剪贴板文本、图片和文件，让 Windows 用户也能获得类似 AirDrop 的体验。
 
 ## 功能特点
@@ -66,6 +64,7 @@ python AirDropPlus.py
 - `device_id`：6 位设备码，首次运行自动生成。
 - `auto_start`：开机启动（`1` 或 `0`）。
 - `startup_notify`：是否显示启动通知（`1` 或 `0`）。
+- `show_icon`：显示托盘图标（`1`，默认）或隐藏（`0`）。仅可在配置文件中修改，重启后生效，不提供 GUI 开关。便携版配置位于 `_internal/config/config.ini`；隐藏后可用任务管理器结束程序再重启。
 - `basic_notifier`：通知实现切换（`0` 现代通知 / `1` 基础通知）。
 - `language`：`zh` 或 `en`（首次运行自动初始化）。
 
@@ -75,7 +74,7 @@ python AirDropPlus.py
 
 | 参数名 | 类型 | 描述 |
 | --- | --- | --- |
-| `ShortcutVersion` | String | 快捷指令版本。主次版本号需要与 `config.ini` 中的程序版本一致（例如程序为 `1.5.x`，快捷指令应传 `1.5`）。 |
+| `ShortcutVersion` | String | 快捷指令要求的 Windows 端最低版本。程序 1.7 可接受 1.5、1.6 或 1.7；要求高于当前程序版本时会拒绝。按数字比较版本号，兼容性更新无需修改现有快捷指令或二维码。 |
 | `Authorization` | String | 密钥，需要与 `config.ini` 中 `key` 完全一致。 |
 
 ### 文件发送（iOS -> Windows）
